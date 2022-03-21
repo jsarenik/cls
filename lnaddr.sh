@@ -14,7 +14,7 @@ getvalue() {
 }
 
 MAXLENGTH=$(getvalue "commentAllowed") && {
-  printf "Enter comment (maxLength: %d): " $MAXLENGTH
+  printf "Enter comment (maxLength: %d): " $MAXLENGTH >&2
   read COMMENT
   COMMENT="&comment=$(echo $COMMENT | cut -b-$MAXLENGTH)"
 }
@@ -23,16 +23,15 @@ MAX=$(getvalue "maxSendable")
 if test -n "$2"
 then
   test $2 -le ${MAX:-0} -a $2 -ge ${MIN:-0} && AMOUNT=$2 \
-    || { echo "Amount not in range $MIN - $MAX. Exiting.";
+    || { echo "Amount not in range $MIN - $MAX. Exiting." >&2;
          exit 1; }
 else
   AMOUNT=$MIN
 fi
 CB=$(getvalue "callback")
 URL="$CB?amount=$AMOUNT$COMMENT"
-test -n "$URL" && echo $URL || echo $LNURL
+test -n "$URL" && echo $URL >&2 || echo $LNURL >&2
 
-wget -qO - "$URL"
+wget -qO - "$URL" || echo >&2
 EXIT=$?
-echo
 exit $EXIT
