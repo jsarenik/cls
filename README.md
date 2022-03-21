@@ -76,3 +76,11 @@ Same as `payzero.sh`, but allows 1% fees.
 # keysendzero.sh
 
 Same as `payzero.sh`, but for `keysend` command.
+
+
+# lnaddr.sh
+
+Get an invoice for paying to Lightning Address.
+Run a static test with:
+
+    lnaddr.sh test@ln.anyone.eu.org
