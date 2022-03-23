@@ -1,7 +1,7 @@
 #!/bin/sh
 
 test $# -ge 1 || exit 1
-PARAM=$1
+PARAM=$(echo $1 | tr '[A-Z]' '[a-z]')
 
 USER=$(echo $PARAM | cut -d@ -f1)
 HOST=$(echo $PARAM | cut -d@ -f2)
