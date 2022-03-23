@@ -32,6 +32,7 @@ CB=$(getvalue "callback")
 URL="$CB?amount=$AMOUNT$COMMENT"
 test -n "$URL" && echo $URL >&2 || echo $LNURL >&2
 
-wget -qO - "$URL" || echo >&2
+wget -qO - "$URL"
 EXIT=$?
+echo >&2
 exit $EXIT
