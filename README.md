@@ -58,14 +58,19 @@ pay fees.
 
 Usage:
 
-     payzero.sh <bolt11> [amount]
+     payzero.sh <bolt11> [amount] [description]
 
 Or:
 
-     payzero.sh <amount> <bolt11>
+     payzero.sh <amount> <bolt11> [description]
 
 Comes handy when paying [CoinOS](https://coinos.io/)-generated
 invoices without an invoice-specified amount.
+
+Another example:
+
+    $ cd ~/.lightning
+    $ payzero.sh $(lnaddr.sh anyone@coinos.io 1000)
 
 
 # payabit.sh

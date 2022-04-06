@@ -15,7 +15,7 @@ getvalue() {
 
 MAXLENGTH=$(getvalue "commentAllowed") && {
   printf "Enter comment (maxLength: %d): " $MAXLENGTH >&2
-  read COMMENT
+  read -r COMMENT </dev/tty
   COMMENT="&comment=$(echo $COMMENT | cut -b-$MAXLENGTH)"
 }
 MIN=$(getvalue "minSendable")
@@ -30,9 +30,6 @@ else
 fi
 CB=$(getvalue "callback")
 URL="$CB?amount=$AMOUNT$COMMENT"
-test -n "$URL" && echo $URL >&2 || echo $LNURL >&2
-
-wget -qO - "$URL"
+test -n "$URL" && { wget -qO - "$URL" | jq -r .pr; } || echo >&2
 EXIT=$?
-echo >&2
 exit $EXIT
