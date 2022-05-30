@@ -1,4 +1,7 @@
-#!/usr/bin/node
+#!/usr/bin/env qjs
+#
+# Interpreted by QuickJS, can be also compiled
+# to a binary file with qjsc
 
 var buffer = {};
 
@@ -2243,17 +2246,38 @@ var bech32 = {
   fromWords: fromWords
 };
 
-var my = '';
-my = process.argv[2].toLowerCase();
-if (my.indexOf(':') !== -1) my = my.split(':')[1];
-if (my.slice(0, 6) === 'lnurl1') {
-  let p = my.split(/[:=]/);
-  let lnurl = p.length === 2 ? p[1] : my;
-  let d = bech32.decode(lnurl, 1500);
-  let b = bech32.fromWords(d.words);
-  console.log(buffer.Buffer.from(b).toString());
+function main(args) {
+  if (args.length < 1) {
+    print("usage: lnurl-denc string");
+    print("       if the string is a LNURL it will be decoded");
+    print("       otherwise it will be encoded into LNURL");
+    return;
+  }
+  var my = '';
+  my = args[0];
+  if (my.indexOf(':') !== -1) my = my.split(':')[1];
+  if (my.slice(0, 6) === 'lnurl1') {
+    let p = my.split(/[:=]/);
+    let lnurl = p.length === 2 ? p[1] : my;
+    let d = bech32.decode(lnurl, 1500);
+    let b = bech32.fromWords(d.words);
+    console.log(buffer.Buffer.from(b).toString());
+  }
+  else {
+    let words = bech32.toWords(buffer.Buffer.from(my, 'utf8'));
+    console.log(encode('lnurl', words, 1500))
+  }
 }
-else {
-  let words = bech32.toWords(buffer.Buffer.from(my, 'utf8'));
-  console.log(encode('lnurl', words, 1500))
+
+var args;
+if (typeof scriptArgs != "undefined") {
+  args = scriptArgs;
+  args.shift();
+} else if (typeof arguments != "undefined") {
+  args = arguments;
+} else {
+  /* default: 1000 digits */
+  args=[1000];
 }
+
+main(args);
