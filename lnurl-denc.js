@@ -2,6 +2,8 @@
 //
 // Interpreted by QuickJS, can be also compiled
 // to a binary file with qjsc
+//
+// This file is based on https://lnurl.fiatjaf.com/codec/bundle.js
 
 var buffer = {};
 
