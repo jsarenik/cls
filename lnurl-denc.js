@@ -1,7 +1,7 @@
 #!/usr/bin/env qjs
-#
-# Interpreted by QuickJS, can be also compiled
-# to a binary file with qjsc
+//
+// Interpreted by QuickJS, can be also compiled
+// to a binary file with qjsc
 
 var buffer = {};
 
