@@ -1,7 +1,5 @@
 #!/usr/bin/node
 
-'use strict';
-
 var buffer = {};
 
 var base64Js = {};
@@ -2244,62 +2242,6 @@ var bech32 = {
   fromWordsUnsafe: fromWordsUnsafe,
   fromWords: fromWords
 };
-
-const file = "client/App.svelte";
-
-// (41:65) {:else}
-function create_else_block(ctx) {
-	let t;
-
-	const block = {
-		c: function create() {
-			t = text("Encode");
-		},
-		m: function mount(target, anchor) {
-			insert_dev(target, t, anchor);
-		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(t);
-		}
-	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_else_block.name,
-		type: "else",
-		source: "(41:65) {:else}",
-		ctx
-	});
-
-	return block;
-}
-
-// (41:59) 
-function create_if_block_1(ctx) {
-	let t;
-
-	const block = {
-		c: function create() {
-			t = text("Decode");
-		},
-		m: function mount(target, anchor) {
-			insert_dev(target, t, anchor);
-		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(t);
-		}
-	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block_1.name,
-		type: "if",
-		source: "(41:59) ",
-		ctx
-	});
-
-	return block;
-}
 
 var my = '';
 my = process.argv[2].toLowerCase();
