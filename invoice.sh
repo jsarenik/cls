@@ -6,6 +6,6 @@ exec lch.sh -k invoice \
   label=$2-$RANDOM \
   description=$DESC \
   exposeprivatechannels="728591x176x1" \
-  msatoshi=$1
+  amount_msat=$1
 
 #  exposeprivatechannels="true" \

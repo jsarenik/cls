@@ -4,4 +4,4 @@ lch.sh -k keysend \
   maxfeepercent=0 \
   exemptfee=10msat \
   destination=$1 \
-  msatoshi=$2
+  amount_msat=$2

@@ -6,8 +6,8 @@ ADD="bolt11=$1"
 # For convenience, bolt11 may be supplied also as a second
 # parameter. Amount is then considered to be the first.
 test "$#" = "2" && {
-  test "${1%${1#lnbc}}" = "lnbc" && ADD="bolt11=$1 msatoshi=$2"
-  test "${2%${2#lnbc}}" = "lnbc" && ADD="bolt11=$2 msatoshi=$1"
+  test "${1%${1#lnbc}}" = "lnbc" && ADD="bolt11=$1 amount_msat=$2"
+  test "${2%${2#lnbc}}" = "lnbc" && ADD="bolt11=$2 amount_msat=$1"
   shift
 }
 shift
