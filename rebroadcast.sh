@@ -33,5 +33,5 @@ for file in $TMPL*; do
   || { echo "ERR $file"; exit 1; }
 done
 echo done
-sleep 20
+sleep ${SLEEP:-20}
 exec $0
