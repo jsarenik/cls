@@ -9,7 +9,7 @@ TMPL=/tmp/mempool$$
 trap "rm -rfv $TMPL*; exit 1" EXIT INT QUIT
 
 printf "Preparing current mempool txid snapshot... "
-bitcoin-cli getrawmempool \
+bch.sh getrawmempool \
   | sed '/^\[/d;/^\]/d;s/,$//;s/^  //;s/^"//;s/"$//' \
   | split -l 256 -a 5 - $TMPL \
   && echo done
@@ -23,11 +23,12 @@ for file in $TMPL*; do
   cat $file | while read tx
   do
     test -n "$tx" || continue
-    RAW=$(bitcoin-cli getrawtransaction $tx 2>/dev/null) || continue
+    RAW=$(bch.sh getrawtransaction $tx 2>/dev/null) || continue
     printf '{"jsonrpc": "1.0", "id": "send", "method": "sendrawtransaction", "params": ["%s"]},' $RAW
   done
   printf '{"jsonrpc": "1.0", "id": "getbc", "method": "getblockcount", "params": []}]\n'
-} | curl -s --user $USER --data-binary @- -H 'content-type: text/plain;' http://127.0.0.1:8332/ >/dev/null \
+} | curl -s --user $USER --data-binary @- -H 'content-type: text/plain;' \
+    http://127.0.0.1:${1:-8332}/ >/dev/null \
   && { rm $file && printf .; } \
   || { echo "ERR $file"; exit 1; }
 done
