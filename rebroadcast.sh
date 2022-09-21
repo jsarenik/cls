@@ -34,4 +34,4 @@ for file in $TMPL*; do
 done
 echo done
 sleep ${SLEEP:-20}
-exec $0
+exec $0 "$@"
