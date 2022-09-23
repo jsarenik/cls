@@ -1,9 +1,10 @@
 #!/bin/sh
 
-for net in testnet3 signet regtest
+for net in signet regtest testnet3
 do
-  test -d $net && break
-  test "${PWD##*/}" = "$net" && { D="$PWD/.."; O="-${net%3}"; break; }
+  test "${PWD##*/}" = "$net" && {
+    exec bitcoind "-datadir=${PWD%/*}" "-${net%3}" "$@"
+  }
 done
 
-exec bitcoind "-datadir=${D:-$PWD}" $O "$@"
+exec bitcoind "-datadir=$PWD" "$@"
