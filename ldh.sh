@@ -1,8 +1,9 @@
 #!/bin/sh
 
-test -d $PWD/bitcoin \
-  || for net in testnet signet regtest
-     do test "${PWD##*/}" = "$net" && { D="$PWD/.."; O="--network $net"; break; }
-     done
+for net in bitcoin testnet signet regtest
+do test "${PWD##*/}" = "$net" && {
+   exec lightningd "--lightning-dir=${PWD%/*}" "--network=$net" "$@"
+}
+done
 
-exec lightningd "--lightning-dir=${D:-$PWD}" $O "$@"
+exit 1
