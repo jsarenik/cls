@@ -49,6 +49,17 @@ main network is assumed.
 
 -----
 
+# gen.sh
+
+Generate blocks (mainly for regtest).
+
+Usage:
+
+    # regtest bitcoind already running
+    cd .bitcoin/regtest
+    gen.sh 101
+
+
 # payzero.sh
 
 This is another C-Lightning script which executes a zero-fee payment
