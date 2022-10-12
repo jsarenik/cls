@@ -8,6 +8,10 @@ Example usage:
     cd .lightning/signet
     lch.sh getinfo
 
+Another example:
+
+    lch.sh .lightning/regtest stop
+
 
 # ldh.sh
 
@@ -20,6 +24,12 @@ Example:
     ldh.sh
     ... lightningd running ...
 
+Another example:
+
+    # bitcoind -signet is running
+    mkdir -p /tmp/lightning/signet
+    ldh.sh /tmp/lightning/signet
+
 
 # bch.sh
 
@@ -29,6 +39,10 @@ line. Example:
     cd .bitcoin/signet
     bch.sh help
 
+Another example:
+
+    bch.sh .bitcoin/signet help
+
 
 # bdh.sh
 
@@ -37,17 +51,10 @@ line. Example:
     cd .bitcoin/regtest
     bdh.sh
 
+Another example:
 
------
+    bdh.sh .bitcoin/regtest
 
-Note that the former two are checking for presence of `$PWD/bitcoin`
-directory which if exists, signals we are in the `~/.lightning` or
-equivalent. There is no such positive file-system-based check I know
-about for checking thesame but for the latter two (Bitcoin-related)
-so they check the existence of test network directories. If not found,
-main network is assumed.
-
------
 
 # gen.sh
 
