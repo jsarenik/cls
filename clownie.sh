@@ -41,19 +41,21 @@ genaddrs() {
 # ESC [nG - move to indicated column n on current line
 # console_codes(4) man page
 test "$ONCE" = "1" || {
+  printf "[?25l" # invisible cursor (tput ivis)
+  trap 'tput cnorm; exit' QUIT INT
   printf '[1F' # erase whole line (last line)
   printf '[2K' # erase whole line (last line)
   printf '[H' # reset cursor (overwrite by next cat, no clear)
 }
 cat <<EOF
- bech32m: [58G######### [11G${A1}    [74G ____
- bech32:  ${A2}         [57G(  0 o 0  )       drop
- p2sh-segwit: ${A3}       [59G\ \_/ /         some
- legacy:      ${A4} [53G${NET}\`---'clowniE   fine
-$ bitcoin-cli -datadir=\$PWD getbalances | magic           _/   \_         gold
+ bech32m: [58G######### [11G${A1}    [74G.====.
+ bech32:  ${A2}         [57G(  0 o 0  )      |drop|
+ p2sh-segwit: ${A3}       [59G\ \_/ /        |some|
+ legacy:      ${A4} [53G${NET}\`---'clowniE  |fine|
+$ bitcoin-cli -datadir=\$PWD getbalances | magic           _/   \_        |gold|
 EOF
 printf "%s" \
-"             [13D$B [1D  [14G # ssh -o \"HostKeyAlgorithms ssh-rsa\" -c aes256-cbc ln.uk.ms "
+"             [13D$B [1D  [14G # ssh -o \"HostKeyAlgorithms ssh-rsa\" -c aes256-cbc ln.uk.ms ####"
 # bolt12(CLN): lno1pqpq86q29pqjqun9vdjkuapqdanxvetjypmrqt33xqhrytfnxgujcgrdw4k8g6tsd3jjqatnv50zqt09cregl8tazrqvpd0vjt5rlxl5phhjhaqps8q0gvcv2ljc4ps9
 }
 
