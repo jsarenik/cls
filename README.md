@@ -113,3 +113,11 @@ Run a static test with:
 
 A simple `invoice` wrapper to use some extra options
 like route hints.
+
+
+# bitcoin-mempool.sh
+
+Curl and Busybox-based script which connects to RPC and gets mempool info.
+Used in the tmate(1) demo which is available by running:
+
+    ssh -p2222 mempool@ln.uk.ms
