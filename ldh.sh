@@ -2,10 +2,9 @@
 
 test -d "$1" && { cd "$1"; shift; }
 
-for net in bitcoin testnet signet regtest
-do test "${PWD##*/}" = "$net" && {
-   exec lightningd "--lightning-dir=${PWD%/*}" "--network=$net" "$@"
-}
-done
+test "${PWD##*/}" = "bitcoin" && net=bitcoin
+test "${PWD##*/}" = "testnet" && net=testnet
+test "${PWD##*/}" = "signet" && net=signet
+test "${PWD##*/}" = "regtest" && net=regtest
 
-exit 1
+exec lightningd "--lightning-dir=${PWD%/*}" "--network=$net" "$@"
