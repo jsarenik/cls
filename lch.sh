@@ -2,13 +2,12 @@
 
 test -d "$1" && { cd "$1"; shift; }
 
-test -d $PWD/bitcoin && cd bitcoin
-for net in bitcoin testnet signet regtest
-do
-  test "${PWD##*/}" = "$net" && {
-    exec timeout 600 \
-      lightning-cli "--lightning-dir=${PWD%/*}" "--network=$net" "$@"
-  }
-done
+test -d bitcoin && cd bitcoin
 
-exit 1
+test "${PWD##*/}" = "bitcoin" && net=bitcoin
+test "${PWD##*/}" = "testnet" && net=testnet
+test "${PWD##*/}" = "signet" && net=signet
+test "${PWD##*/}" = "regtest" && net=regtest
+
+exec timeout 600 \
+  lightning-cli "--lightning-dir=${PWD%/*}" "--network=$net" "$@"
