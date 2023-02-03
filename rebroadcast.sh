@@ -1,27 +1,13 @@
 #!/bin/sh
 
-lock=/tmp/${0##*/}-$(echo ${PWD} | md5sum | cut -b-8)
-mkdir $lock || exit 1
-
-mempool=/tmp/mempool$$
-trap "rm -rfv $mempool; exit" INT QUIT
-
-printf "%s " "Preparing current mempool txid snapshot..."
-bch.sh getrawmempool \
-  | tr -d '[], "' | sed '/^$/d' \
-  > $mempool \
-  && echo done
-
-ls $mempool >/dev/null 2>&1 \
-  || { echo "Mempool empty. Exiting."; exit; }
+lock=$PREFIX/tmp/${0##*/}-$(echo ${PWD} | md5sum | cut -b-8)
+test "$1" = "-c" && { rm -rf $lock; exit; }
+mkdir $lock >/dev/null 2>&1 || exit 1
 
 echo Rebroadcasting transactions from the mempool...
-  while read tx
-  do
-    test -n "$tx" || continue
-    { bch.sh getrawtransaction $tx | bch.sh -stdin sendrawtransaction 50; } \
-      >/dev/null 2>&1
-  done < $mempool
-  rm $mempool
+{ bch.sh getrawmempool \
+  | tr -d '[], "' | sed '/^$/d' \
+  | xargs -n1 bch.sh getrawtransaction \
+  | bch.sh -stdin sendrawtransaction 50; } >/dev/null 2>&1
 echo Rebroadcast done
 rmdir $lock
