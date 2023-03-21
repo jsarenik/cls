@@ -16,7 +16,7 @@ hsh=$1
 shift
 
 myexit() {
-  rmdir $lock
+  rmdir $lock 2>/dev/null
   true
   exit
 }
