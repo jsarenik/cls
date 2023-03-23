@@ -47,6 +47,7 @@ test $# -ne 2 && {
 
 from=0
 to=.
+emptyplh="xxxx xxxx xxxx xxxx"
 
 printblock.sh $count
 echo $hash \
@@ -59,10 +60,10 @@ echo $hash \
   read line4
 cat << EOF
        ,---   .123 4567 89ab cdef   ---,
-       | ..   $line1   .f |
-       | 1.   $line2   1f |
-       | 2.   $line3   2f |
-       | 3.   $line4   3f |
+       | ..   ${line1:-$emptyplh}   .f |
+       | 1.   ${line2:-$emptyplh}   1f |
+       | 2.   ${line3:-$emptyplh}   2f |
+       | 3.   ${line4:-$emptyplh}   3f |
        '===   ==== ==== ==== ====   ==='
 EOF
 } | tr "$from" "$to"
