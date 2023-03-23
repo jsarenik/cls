@@ -76,6 +76,6 @@ rmdir $lock
 throwdice.sh
 
 # Rebroadcast once
-rebroadcast.sh
+nohup rebroadcast.sh >/dev/null 2>&1 &
 
 true
