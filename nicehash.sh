@@ -20,6 +20,7 @@ EOF
 gbhurl=http://ln.anyone.eu.org/getblockhash.txt
 api=http://beh.bublina.eu.org/api/block/header
 
+test "$1" = "-h" && usage
 test $# -le 2 || usage
 test $# -ne 2 && {
   test $# -eq 0 && {
