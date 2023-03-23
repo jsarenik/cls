@@ -31,7 +31,7 @@ test $# -ne 2 && {
   if
     test $(echo $1 | wc -c) -lt 64
   then
-    count=$1
+    count=$(echo $1 | tr -cd '[0-9]')
     hash=$(wget -qO - $api/$count \
       | tr , '\n' | grep hash | cut -d: -f2- | tr -d '"')
   else
