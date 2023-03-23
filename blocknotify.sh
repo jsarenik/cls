@@ -22,7 +22,7 @@ myexit() {
 }
 
 printall() {
-  cd $blocks
+  cd $blocks || exit 1
   while ls * >/dev/null 2>&1; do
   for h in *; do
     printf "%s " $h && rmdir $h
