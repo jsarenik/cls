@@ -23,16 +23,17 @@ myexit() {
 
 printall() {
   cd $blocks
+  while ls * >/dev/null 2>&1; do
   for h in *; do
-    printf "%s " $h
+    printf "%s " $h && rmdir $h
     bch.sh $origdir getblockheader $h 2>/dev/null \
       | tr -d ' ,"' \
       | grep ^height \
       | cut -d: -f2- \
       | grep . \
-      && rmdir $h \
       || break
-  done | sort -n | xargs -n2 nicehash.sh
+  done | sort -n -t " " -k 2 | xargs -n2 nicehash.sh
+  done
   cd $origdir
 }
 
