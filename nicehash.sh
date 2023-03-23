@@ -5,6 +5,9 @@
 # new is <hash> only
 # super new is <count> only (number of chars is <64)
 
+VER=1.0.0
+VERSION=$VER-$(sed 1d $0 | md5sum | cut -b-5)
+
 usage() {
 cat <<EOF
 Usage: nicehash.sh <hash> <count>
@@ -20,6 +23,7 @@ EOF
 gbhurl=http://ln.anyone.eu.org/getblockhash.txt
 api=http://beh.bublina.eu.org/api/block/header
 
+test "$1" = "-V" && { echo $VERSION; exit; }
 test "$1" = "-h" && usage
 test $# -le 2 || usage
 test $# -ne 2 && {
