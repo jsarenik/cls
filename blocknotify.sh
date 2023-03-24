@@ -43,8 +43,8 @@ printall
 
 shmp=$PREFIX/dev/shm
 gbci=$shmp/getblockchaininfo-$add
-bch.sh getblockchaininfo > ${gbci}-new
-mv ${gbci}-new $gbci
+bch.sh getblockchaininfo > ${gbci}-new \
+  && mv ${gbci}-new $gbci && {
 
 gbc=$shmp/getblockcount-$add
 gbh=$shmp/getblockhash-$add
@@ -58,6 +58,7 @@ mv ${gbh}-new $gbh
 best=$(cat $gbci | grep headers | grep -o '[0-9]\+' || echo 0)
 ours=$(cat $gbci | grep blocks | grep -o '[0-9]\+' || echo 1)
 test "$best" = "$ours" || myexit
+}
 
 test -r ${B}.sh && . ./${B}.sh
 
