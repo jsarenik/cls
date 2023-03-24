@@ -60,6 +60,7 @@ ours=$(cat $gbci | grep blocks | grep -o '[0-9]\+' || echo 1)
 test "$best" = "$ours" || myexit
 }
 
+# Per-block automation - see 777776.sh
 test -r ${B}.sh && . ./${B}.sh
 
 # If we got all the way here
