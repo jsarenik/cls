@@ -80,4 +80,6 @@ throwdice.sh
 # Rebroadcast once
 nohup rebroadcast.sh >/dev/null 2>&1 &
 
+rm -rf wosh.cat-last*
+
 true
