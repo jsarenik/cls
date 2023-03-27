@@ -3,29 +3,34 @@
 
 # Bitcoin Daemon Here - starts a bitcoind in current directory
 bdh() {
+  test "$PWD" = "$HOME" && cd ~/.bitcoin
   test -d "$1" && { cd "$1"; shift; }
   OPTS="$@"
   sh -se <<-EOF
-	test "\${PWD##*/}" = "signet" && chain=signet
-	test "\${PWD##*/}" = "testnet3" && chain=test
-	test "\${PWD##*/}" = "regtest" && chain=regtest
-	test "\$chain" = "" || bd=\${PWD%/*}
+	test "${PWD##*/}" = "signet" && chain=signet
+	test "${PWD##*/}" = "testnet3" && chain=test
+	test "${PWD##*/}" = "regtest" && chain=regtest
+	test "\$chain" = "" || bd=${PWD%/*}
 
-	exec bitcoind "-datadir=\${bd:-\$PWD}" -chain=\${chain:-main} $OPTS
+	exec bitcoind "-datadir=\${bd:-$PWD}" -chain=\${chain:-main} $OPTS
 	EOF
 }
 
 # Bitcoin Client Here - starts a bitcoin-cli in current directory
 bch() {
+  unset wallet
   test -d "$1" && { cd "$1"; shift; }
+  test -r wallet.dat && { wallet="-rpcwallet=${PWD##*/}"; cd ..; }
+  test "${PWD##*/}" = "wallets" && cd ..
   OPTS="$@"
   sh -se <<-EOF
-	test "\${PWD##*/}" = "signet" && chain=signet
-	test "\${PWD##*/}" = "testnet3" && chain=test
-	test "\${PWD##*/}" = "regtest" && chain=regtest
-	test "\$chain" = "" || bd=\${PWD%/*}
+	test "${PWD##*/}" = "signet" && chain=signet
+	test "${PWD##*/}" = "testnet3" && chain=test
+	test "${PWD##*/}" = "regtest" && chain=regtest
+	test "\$chain" = "" || bd=${PWD%/*}
 
-	exec bitcoin-cli "-datadir=\${bd:-\$PWD}" -chain=\${chain:-main} $OPTS
+	exec bitcoin-cli $wallet "-datadir=\${bd:-$PWD}" \
+	  -chain=\${chain:-main} $OPTS
 	EOF
 }
 
@@ -34,12 +39,12 @@ ldh() {
   test -d "$1" && { cd "$1"; shift; }
   OPTS="$@"
   sh -se <<-EOF
-	test "\${PWD##*/}" = "bitcoin" && net=bitcoin
-	test "\${PWD##*/}" = "testnet" && net=testnet
-	test "\${PWD##*/}" = "signet" && net=signet
-	test "\${PWD##*/}" = "regtest" && net=regtest
+	test "${PWD##*/}" = "bitcoin" && net=bitcoin
+	test "${PWD##*/}" = "testnet" && net=testnet
+	test "${PWD##*/}" = "signet" && net=signet
+	test "${PWD##*/}" = "regtest" && net=regtest
 
-	exec lightningd "--lightning-dir=\${PWD%/*}" "--network=\$net" $OPTS
+	exec lightningd "--lightning-dir=${PWD%/*}" "--network=\$net" $OPTS
 	EOF
 }
 
@@ -49,13 +54,13 @@ lch() {
   test -d bitcoin && cd bitcoin
   OPTS="$@"
   sh -se <<-EOF
-	test "\${PWD##*/}" = "bitcoin" && net=bitcoin
-	test "\${PWD##*/}" = "testnet" && net=testnet
-	test "\${PWD##*/}" = "signet" && net=signet
-	test "\${PWD##*/}" = "regtest" && net=regtest
+	test "${PWD##*/}" = "bitcoin" && net=bitcoin
+	test "${PWD##*/}" = "testnet" && net=testnet
+	test "${PWD##*/}" = "signet" && net=signet
+	test "${PWD##*/}" = "regtest" && net=regtest
 
 	exec timeout 600 \
-	  lightning-cli "--lightning-dir=\${PWD%/*}" "--network=\$net" $OPTS
+	  lightning-cli "--lightning-dir=${PWD%/*}" "--network=\$net" $OPTS
 	EOF
 }
 
