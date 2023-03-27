@@ -21,6 +21,7 @@ bch() {
   unset wallet
   test -d "$1" && { cd "$1"; shift; }
   test -r wallet.dat && { wallet="-rpcwallet=${PWD##*/}"; cd ..; }
+  test -r wosh.cat && cd ..
   test "${PWD##*/}" = "wallets" && cd ..
   OPTS="$@"
   sh -se <<-EOF
