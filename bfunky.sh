@@ -58,3 +58,16 @@ lch() {
 	  lightning-cli "--lightning-dir=\${PWD%/*}" "--network=\$net" $OPTS
 	EOF
 }
+
+# Bitcoin Tool Here - starts bitcointool with network
+bth() {
+  test -d "$1" && { cd "$1"; shift; }
+  OPTS="$@"
+  sh -se <<-EOF
+	test "${PWD##*/}" = "signet" && chain=-t
+	test "${PWD##*/}" = "testnet3" && chain=-t
+	test "${PWD##*/}" = "regtest" && chain=-r
+
+	exec bitcointool \${chain} $OPTS
+	EOF
+}
