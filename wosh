@@ -196,7 +196,7 @@ send() (
   exec 2>/dev/null
   fee=$(gentx ${2:-0} ${1:-0} 1 \
     | crt | srt | drt | grep vsize | cut -d: -f2 | tr -d ' ,"' | grep .) \
-    || exit
+    || exit 23
   #echo $fee >&2
   gentx ${2:-$fee} ${1:-0} | crt | srt | sert | safetee $tmp/last \
     grep . || exit
