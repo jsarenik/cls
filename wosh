@@ -13,8 +13,7 @@ Commands:
   init <privkey> <addr>
    - initialize a new config in current directory
   gini
-   - generate a new privkey and address using bth.sh
-     (which in turn uses the libbtc bitcointool)
+   - generate a new privkey and address using bitcointool
   gen [number_of_blocks]
    - on regtest generate a number_of_blocks
      to configured address addr
@@ -31,6 +30,11 @@ EOF
 exit
 }
 
+notfound() {
+  echo "Configuration file not found!"
+  help
+}
+
 test "$1" = "-h" && help
 add=$(echo ${PWD} | md5sum | cut -b-7)
 tmp=/tmp/wosh-$add
@@ -38,7 +42,7 @@ mkdir -p $tmp
 lock=$PREFIX/tmp/lock-$add
 
 rcfile=$PWD/wosh.cat
-init() {
+init() (
   test -r $rcfile && { echo "$rcfile already exists!"; exit 1; }
   test "$1" = "" && { echo "Missing <privkey> argument!"; help; }
   test "$2" = "" && { echo "Missing <addr> argument!"; help; }
@@ -47,49 +51,46 @@ init() {
 	privkey=$1
 	addr=$2
 	EOF
-}
+)
 
-gini() {
-  privkey=$(bth.sh -c genkey | grep WIF | cut -d: -f2)
-  pub=$(bth.sh -c pubfrompriv -p $privkey | grep ^pubkey: | cut -d: -f2)
-  bech32=$(bth.sh -c addrfrompub -k $pub | grep ^p2wpkh | cut -d: -f2)
+gini() (
+  privkey=$(bth -c genkey | grep WIF | cut -d: -f2)
+  pub=$(bth -c pubfrompriv -p $privkey | grep ^pubkey: | cut -d: -f2)
+  bech32=$(bth -c addrfrompub -k $pub | grep ^p2wpkh | cut -d: -f2)
   init $privkey $bech32
-}
+)
 
-gen() {
+gen() (
   . $rcfile || exit 1
-  bch.sh generatetoaddress ${1:-1} $addr
+  printf "%s\n%s\n" ${1:-1} $addr | bch -stdin generatetoaddress
   rm $rcfile-lastamount $rcfile-last 2>/dev/null
-}
+)
 
-list() {
+list() (
   sto |
   {
     read l; read l; read l
     read l4
     { printf "height="; echo $l4 | cut -d: -f2 | tr -d ' ,'; } \
-      > $rcfile-height
+      | safecat $rcfile-height
     read l; read l; read l
-    echo "$l4" > $tmp/lines
+    #echo "$l4" > $tmp/lines
     cat \
     | tr -d '\n' | tr '{' '\n' \
     | cut -d, -f1,2,5,6,7 | tr ',' ':' | cut -d: -f2,4,6,8,10 \
     | tr -d ' "}\]' \
     | tr : " " \
-    | sort -n -t " " -k 3
-  } | tee $tmp/listnew-$$
-  until mkdir $lock 2>/dev/null; do sleep 0.5; done
-  mv $tmp/listnew-$$ $rcfile-list
-  rmdir $lock 2>/dev/null
-}
+    | sort -n -t " " -k 5
+  } | safetee $rcfile-list
+)
 
-compute() {
+compute() (
   result=$(echo "scale=8; $1" | bc)
   echo $result | grep -q '^\.' && result=0$result
   echo $result
-}
+)
 
-getbalance() {
+getbalance() (
   list >/dev/null
   first=0
   if
@@ -104,52 +105,57 @@ getbalance() {
   else
     cut -d " " -f3 < $rcfile-list
   fi
-}
+)
 
-genfromlist() {
+genfromlist() (
   amount=0
   first=0
   total=0
   list >/dev/null
   . $rcfile-height
-  until mkdir $lock 2>/dev/null; do sleep 0.5; done
   shuf $rcfile-list | while read txid vout amount coinbase hei rest
   do
-    test "$coinbase" = "true" && \
-      test $hei -gt $(($height-100)) && continue
+    test $hei -gt $(($height-100)) && continue
     test $first -eq 1 && printf '%s' ","
     first=1
     printf '%s' '''{"txid":"'$txid'","vout":'$vout'}'''
     total=$(compute "$total+$amount")
-    echo $total > $tmp/totalnew
-    mv $tmp/totalnew $tmp/total
-  done > $tmp/utxonew
-  mv $tmp/utxonew $tmp/utxo
-  rmdir $lock 2>/dev/null
-}
+    echo $total | safecat $tmp/total
+  done | safecat $tmp/utxo
+)
 
-genlastc() {
-  txid=$(cat $rcfile-last)
+safe() {
+  otmp=$(mktemp)
+  cat > $otmp
   until mkdir $lock 2>/dev/null; do sleep 0.5; done
-  bch.sh gettxout $txid 0 \
-    | grep value | cut -d: -f2- | tr -d ' ,' \
-    > $tmp/lastcnew
-  mv $tmp/lastcnew $tmp/lastamount
+  test -s $otmp && mv $otmp $1
   rmdir $lock 2>/dev/null
 }
 
-genfromlast() {
+safecat() (
+  safe $1
+)
+
+safetee() (
+  safe $1
+  cat $1
+)
+
+genlastc() (
+  txid=$(cat $rcfile-last)
+  bch gettxout $txid 0 \
+    | grep value | cut -d: -f2- | tr -d ' ,' \
+    | safecat $tmp/lastamount
+)
+
+genfromlast() (
   txid=$(cat $rcfile-last)
   genlastc
-  until mkdir $lock 2>/dev/null; do sleep 0.5; done
-  cat $rcfile-lastamount > $tmp/totalnew
-  mv $tmp/totalnew $tmp/total
-  printf '%s' '''{"txid":"'$txid'","vout":0}''' > $tmp/utxonew
-  mv $tmp/utxonew $tmp/utxo
-  rmdir $lock 2>/dev/null
-}
+  cat $rcfile-lastamount | safecat $tmp/total
+  printf '%s' '''{"txid":"'$txid'","vout":0}''' | safecat $tmp/utxo
+)
 
-gentx() {
+gentx() (
   . $rcfile || exit 1
   fee=${1:-0}
   faucet=${2:-0}
@@ -165,20 +171,14 @@ gentx() {
     test "$faucet" = "0"
   then
     outs='''{"'$addr'":'$total'}'''
-    until mkdir $lock 2>/dev/null; do sleep 0.5; done
-    echo $total > $rcfile-lastamountnew
-    mv $rcfile-lastamountnew $rcfile-lastamount
-    rmdir $lock 2>/dev/null
+    echo $total | safecat $rcfile-lastamount
   else
     ranmin=$(compute "($RANDOM+50000)/100000000")
     #echo $ranmin >&2
     rest=$(compute "$total-$ranmin")
     #echo $rest >&2
     outs='''{"'$addr'":'$rest'},{"'$faucet'":'$ranmin'}'''
-    until mkdir $lock 2>/dev/null; do sleep 0.5; done
-    echo $rest > $rcfile-lastamountnew
-    test "$fake" = "0" && mv $rcfile-lastamountnew $rcfile-lastamount
-    rmdir $lock 2>/dev/null
+    test "$fake" = "0" && echo $rest | safecat $rcfile-lastamount
   fi
   #echo $outs >&2
   {
@@ -189,62 +189,101 @@ gentx() {
 	true
 	EOF
   }
-}
+)
 
-# send <addr> - sends from faucet to <addr>, change back to faucet
-send() {
+# send [addr] [fee] - sends from faucet to <addr>, change back to faucet
+send() (
+  exec 2>/dev/null
   fee=$(gentx ${2:-0} ${1:-0} 1 \
-    | crt | srt | drt | grep vsize | cut -d: -f2 | tr -d ' ,"')
+    | crt | srt | drt | grep vsize | cut -d: -f2 | tr -d ' ,"' | grep .) \
+    || exit
   #echo $fee >&2
-  gentx ${2:-$fee} ${1:-0} | crt | srt | sert | tee $rcfile-lastnew
-  until mkdir $lock 2>/dev/null; do sleep 0.5; done
-  test -s $rcfile-lastnew && mv $rcfile-lastnew $rcfile-last
-  rmdir $lock 2>/dev/null
-}
+  gentx ${2:-$fee} ${1:-0} | crt | srt | sert | safetee $rcfile-last \
+    grep . || exit
+)
 
-cons() {
+cons() (
   . $rcfile || exit 1
-  gentx $addr
-}
+  send $addr
+)
 
-consagen() {
+consagen() (
   cons
   gen
-}
+)
 
-print() {
+print() (
   . $rcfile || exit 1
   echo $addr
-}
+)
 
 # Misc functions to ease typing
 
-crt() {
-  bch.sh -stdin createrawtransaction
-}
+crt() (
+  bch -stdin createrawtransaction
+)
 
-drt() {
-  bch.sh -stdin decoderawtransaction
-}
+drt() (
+  bch -stdin decoderawtransaction
+)
 
-srt() {
-  . $rcfile || exit 1
+srt() (
+  . $rcfile || notfound
   {
   cat
   echo '''["'$privkey'"]'''
-  } | bch.sh -stdin signrawtransactionwithkey \
+  } | bch -stdin signrawtransactionwithkey \
     | grep '"hex"' \
     | cut -d: -f2- \
     | tr -d ' ,"'
-}
+)
 
-sert() {
-  bch.sh -stdin sendrawtransaction
-}
+sert() (
+  bch -stdin sendrawtransaction
+)
 
-sto() {
+sto() (
   . $rcfile || exit 1
-  bch.sh scantxoutset start '''["addr('$addr')"]'''
+  printf '%s\n%s\n' start '''["addr('$addr')"]''' | bch -stdin scantxoutset
+)
+
+clean() (
+  bch stop
+  cd ../..
+  while kill -0 $(cat bitcoind.pid 2>/dev/null) 2>/dev/null
+  do printf .;  sleep 1; done; echo
+  rm -rf blocks indexes chainstate wallets/default *.json *.dat wosh*
+  blocknotify.sh -c
+)
+
+setbchain() {
+  test "${PWD##*/}" = "signet" && chain=signet
+  test "${PWD##*/}" = "testnet3" && chain=test
+  test "${PWD##*/}" = "regtest" && chain=regtest
+  test "$chain" = "" || ddir=${PWD%/*}
 }
+
+# Bitcoin Client Here - starts a bitcoin-cli in current directory
+bch() (
+  test -d .bitcoin && cd .bitcoin
+  test -d "$1" && { cd "$1"; shift; }
+  test -r wallet.dat && { wallet="-rpcwallet=${PWD##*/}"; cd ..; }
+  echo $PWD | grep -q wosh- && test -r wosh.cat && cd ..
+  test "${PWD##*/}" = "wallets" && cd ..
+  setbchain
+  bitcoin-cli $wallet "-datadir=${ddir:-$PWD}" \
+    -chain=${chain:-main} "$@"
+)
+
+# Bitcoin Tool Here - starts bitcointool with network parameter
+bth() (
+  test -d "$1" && { cd "$1"; shift; }
+  echo $PWD | grep -q wosh- && cd ..
+  test "${PWD##*/}" = "wallets" && cd ..
+  test "${PWD##*/}" = "signet" && chain=-t
+  test "${PWD##*/}" = "testnet3" && chain=-t
+  test "${PWD##*/}" = "regtest" && chain=-r
+  bitcointool ${chain} "$@"
+)
 
 "$@"
