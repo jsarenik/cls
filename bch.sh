@@ -1,5 +1,6 @@
 #!/bin/sh
 
+test -d .bitcoin && cd .bitcoin
 test -d "$1" && { cd "$1"; shift; }
 
 test -r wallet.dat && { wallet="-rpcwallet=${PWD##*/}"; cd ..; }

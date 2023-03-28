@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test "$PWD" = "$HOME" && cd ~/.bitcoin
+test -d .bitcoin && cd .bitcoin
 test -d "$1" && { cd "$1"; shift; }
 
 test "${PWD##*/}" = "signet" && chain=signet

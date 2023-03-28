@@ -3,7 +3,7 @@
 
 # Bitcoin Daemon Here - starts a bitcoind in current directory
 bdh() {
-  test "$PWD" = "$HOME" && cd ~/.bitcoin
+  test -d .bitcoin && cd .bitcoin
   test -d "$1" && { cd "$1"; shift; }
   OPTS="$@"
   sh -se <<-EOF
@@ -19,6 +19,7 @@ bdh() {
 # Bitcoin Client Here - starts a bitcoin-cli in current directory
 bch() {
   unset wallet
+  test -d .bitcoin && cd .bitcoin
   test -d "$1" && { cd "$1"; shift; }
   test -r wallet.dat && { wallet="-rpcwallet=${PWD##*/}"; cd ..; }
   test -r wosh.cat && cd ..
