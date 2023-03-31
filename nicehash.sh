@@ -55,8 +55,8 @@ emptyplh="???? ???? ???? ????"
 
 printblock.sh $count
 echo $hash \
-  | sed -E 's/.{16}/&\n/g' \
-  | sed '$d; s/..../& /g; s/ $//' \
+  | fold -s -w 16 \
+  | sed -E 's/([0-9a-f]{4})(....)(....)(....)/\1 \2 \3 \4/g' \
   | {
   read line1
   read line2
