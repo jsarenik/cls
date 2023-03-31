@@ -3,8 +3,6 @@
 test "$1" = "-d" && { debug=1; shift; }
 test "$1" = "" && exit
 bc=${1:-$(bch.sh getblockcount)}
-fontdir=${PREFIX:-/usr}/share/figlet/fonts
-test -d $fontdir || fontdir=${fontdir%/*}
 
 echo $1 | grep -q '^[0-9]\+$' && { bc=$1; shift; }
 font=$(printf "banner\nbig\nblock\nscript\nsmall\nsmshadow\nslant\nsmslant\nstandard\n" | sed -n "$(($bc%9+1))p")
@@ -20,7 +18,7 @@ test "$font" = "block" -o "$font" = "banner" \
   || bcnew="block$bcnew"
 
 {
-figlet -w 48 -c -d $fontdir -f $font \
+figlet -w 48 -c -f $font \
   "$bcnew"
 } | sed 's/\s\+$//' | uniq
 
