@@ -5,8 +5,9 @@
 # new is <hash> only
 # super new is <count> only (number of chars is <64)
 
-VER=1.0.0
-VERSION=$VER-$(sed 1d $0 | md5sum | cut -b-5)
+VER=1.1.0
+type md5 >/dev/null 2>&1 && md5=md5
+VERSION=$VER-$(sed 1d $0 | ${md5:-"md5sum"} | cut -b-5)
 
 usage() {
 cat <<EOF
