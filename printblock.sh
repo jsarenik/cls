@@ -20,6 +20,6 @@ test "$font" = "block" -o "$font" = "banner" \
 {
 figlet -w 48 -c -f $font \
   "$bcnew"
-} | sed 's/\s\+$//' | uniq
+} | sed 's/^[[:space:]]*$//g' | uniq
 
 test "$debug" = "1" -o "$1" = "-d" && echo $font
