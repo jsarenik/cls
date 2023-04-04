@@ -8,6 +8,7 @@
 VER=1.1.0
 type md5 >/dev/null 2>&1 && md5=md5
 VERSION=$VER-$(sed 1d $0 | ${md5:-"md5sum"} | cut -b-5)
+tmp=$(mktemp)
 
 usage() {
 cat <<EOF
@@ -19,6 +20,10 @@ Usage: nicehash.sh <hash> <count>
 Where the single <count> is < 64 digits long.
 EOF
   exit 1
+}
+
+thousands() {
+  sed -r -e ':L' -e 's=([0-9]+)([0-9]{3})=\1,\2=g' -e 't L'
 }
 
 gbhurl=http://ln.anyone.eu.org/getblockhash.txt
@@ -54,7 +59,14 @@ from=0
 to=.
 emptyplh="???? ???? ???? ????"
 
-printblock.sh $count
+printblock.sh $count > $tmp || {
+  cat <<EOF
+       +------------------------------ -
+       | block $(printf "$count" | thousands)
+       +------------------------------ -
+EOF
+} > $tmp
+
 echo $hash \
   | fold -s -w 16 \
   | sed -E 's/([0-9a-f]{4})(....)(....)(....)/\1 \2 \3 \4/g' \
@@ -71,4 +83,5 @@ cat << EOF
        | 3.   ${line4:-$emptyplh}   3f |
        '===   ==== ==== ==== ====   ==='
 EOF
-} | tr "$from" "$to"
+} | tr "$from" "$to" >> $tmp
+cat $tmp && rm $tmp
