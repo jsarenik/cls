@@ -191,6 +191,8 @@ gentx() (
   }
 )
 
+# Add sendall from singer
+
 # send [addr] [fee] - sends from faucet to <addr>, change back to faucet
 send() (
   exec 2>/dev/null
