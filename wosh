@@ -33,9 +33,12 @@ exit
 
 test "$1" = "-h" && help
 add=$(echo ${PWD} | md5sum | cut -b-7)
-tmp=/tmp/wosh-$add
+tmp=$PREFIX/tmp/wosh-$add
 mkdir -p $tmp
 lock=$PREFIX/tmp/lock-$add
+bbh=$(bch.sh getbestblockhash)
+lbhf=$tmp/lastblockhash
+lbh=$(cat $lbhf 2>/dev/null) && { test "$bbh" = "$lbh" || rm -f *last*; }
 
 rcfile=$PWD/wosh.cat
 init() {
@@ -85,12 +88,13 @@ list() {
 
 compute() {
   result=$(echo "scale=8; $1" | bc)
+  echo $result | grep -q '^-\.' && result=-0${result#-}
   echo $result | grep -q '^\.' && result=0$result
-  echo $result | grep -q '^-\.' && result=-0$result
   echo $result
 }
 
 getbalance() {
+  test -r $rcfile-lastamount && cat $rcfile-lastamount || {
   list >/dev/null
   first=0
   if
@@ -105,6 +109,7 @@ getbalance() {
   else
     cut -d " " -f3 < $rcfile-list
   fi
+  }
 }
 
 genfromlist() {
@@ -136,6 +141,8 @@ genlastc() {
     | grep value | cut -d: -f2- | tr -d ' ,' \
     > $tmp/lastcnew
   mv $tmp/lastcnew $tmp/lastamount
+  echo $bbh > $lbhf-new
+  mv $lbhf-new $lbhf
   rmdir $lock 2>/dev/null
 }
 
@@ -171,6 +178,8 @@ gentx() {
     until mkdir $lock 2>/dev/null; do sleep 0.5; done
     echo $total > $rcfile-lastamountnew
     mv $rcfile-lastamountnew $rcfile-lastamount
+    echo $bbh > $lbhf-new
+    mv $lbhf-new $lbhf
     rmdir $lock 2>/dev/null
   else
     ranmin=$(compute "(${RANDOM}+50000)/100000000")
@@ -180,7 +189,11 @@ gentx() {
     outs='''{"'$addr'":'$rest'},{"'$faucet'":'$ranmin'},{"data":"6c6561726e20426974636f696e"}'''
     until mkdir $lock 2>/dev/null; do sleep 0.5; done
     echo $rest > $rcfile-lastamountnew
-    test "$fake" = "0" && mv $rcfile-lastamountnew $rcfile-lastamount
+    test "$fake" = "0" && {
+      mv $rcfile-lastamountnew $rcfile-lastamount
+      echo $bbh > $lbhf-new
+      mv $lbhf-new $lbhf
+    }
     rmdir $lock 2>/dev/null
   fi
   #echo $outs >&2
@@ -210,6 +223,8 @@ gentxall() {
   until mkdir $lock 2>/dev/null; do sleep 0.5; done
   echo $total > $rcfile-lastamountnew
   mv $rcfile-lastamountnew $rcfile-lastamount
+  echo $bbh > $lbhf-new
+  mv $lbhf-new $lbhf
   rmdir $lock 2>/dev/null
   #echo $outs >&2
   {
@@ -230,6 +245,8 @@ sendall() {
   gentxall ${2:-$fee} ${1:-0} | crt | srt | sert | tee $rcfile-lastnew
   until mkdir $lock 2>/dev/null; do sleep 0.5; done
   test -s $rcfile-lastnew && mv $rcfile-lastnew $rcfile-last
+  echo $bbh > $lbhf-new
+  mv $lbhf-new $lbhf
   rmdir $lock 2>/dev/null
 }
 
@@ -241,7 +258,11 @@ send() {
   gentx ${2:-$fee} ${1:-0} | crt | srt | sert | tee $rcfile-lastnew
   #gentx 0 ${1:-0} | crt | srt | sert | tee $rcfile-lastnew
   until mkdir $lock 2>/dev/null; do sleep 0.5; done
-  test -s $rcfile-lastnew && mv $rcfile-lastnew $rcfile-last
+  test -s $rcfile-lastnew && {
+    mv $rcfile-lastnew $rcfile-last
+    echo $bbh > $lbhf-new
+    mv $lbhf-new $lbhf
+  }
   rmdir $lock 2>/dev/null
 }
 
@@ -256,7 +277,11 @@ ssend() (
   gentx ${2:-$fee} ${1:-0} | crt | srt | sert | tee $rcfile-lastnew
   #gentx 0 ${1:-0} | crt | srt | sert | tee $rcfile-lastnew
   until mkdir $lock 2>/dev/null; do sleep 0.5; done
-  test -s $rcfile-lastnew && mv $rcfile-lastnew $rcfile-last
+  test -s $rcfile-lastnew && {
+    mv $rcfile-lastnew $rcfile-last
+    echo $bbh > $lbhf-new
+    mv $lbhf-new $lbhf
+  }
   rmdir $lock 2>/dev/null
 )
 
