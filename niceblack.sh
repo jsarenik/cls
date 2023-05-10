@@ -78,7 +78,7 @@ cat << EOF
   | 2.   ${line3:-$emptyplh}   2f |
   | 3.   ${line4:-$emptyplh}   3f |
   '===   ==== ==== ==== ====   ==='
-   sf:   $(shortform.sh -o $count)
+   sf:   $(shortform.sh -o $hash)
 EOF
 } | tr "$from" "$to"
 } >> $tmp
