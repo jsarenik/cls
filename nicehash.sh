@@ -41,7 +41,7 @@ test $# -ne 2 && {
   then
     count=$(echo $1 | tr -cd '[0-9]')
     hash=$(wget -qO - $api/$count \
-      | tr , '\n' | grep hash | cut -d: -f2- | tr -d '"')
+      | tr , '\n' | grep -w hash | cut -d: -f2- | tr -d '"')
   else
     hash=$1
     count=$(wget -qO - $api/$hash \

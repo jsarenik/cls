@@ -42,7 +42,7 @@ test $# -lt 2 && {
     test "$count" = "$1"
   then
     hash=$(wget -qO - $api/$count \
-      | tr , '\n' | grep hash | cut -d: -f2- | tr -d '"')
+      | tr , '\n' | grep -w hash | cut -d: -f2- | tr -d '"')
   else
     hash=$1
     count=$(wget -qO - $api/$hash \
