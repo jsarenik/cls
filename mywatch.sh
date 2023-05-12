@@ -1,11 +1,16 @@
-#!/busybox/ash
+#!/bin/sh
 
 TMP=/tmp/mywatch-$$
-cols=$(tput cols)
-sleep="2.0s"
+stty size > $TMP-size
+read rows cols < $TMP-size
+rows=$(($rows-2))
+sleep="2"
 test "$1" = "-n" && { sleep=${2:-"2.0s"}; shift 2; }
 
-trap "cat $TMP 2>/dev/null; rm -f ${TMP}*; tput cnorm; exit" INT QUIT EXIT
+type md5 >/dev/null 2>&1 && md5=md5
+trap \
+  "cat $TMP 2>/dev/null; rm -f ${TMP}*; printf '\033[?12l\033[?25h'; exit" \
+  INT QUIT EXIT
 #reset; clear
 printf '\033[2J'
 
@@ -22,15 +27,14 @@ do
   printf "%s\n" "${line}" > $TMP
   echo >>$TMP
   echo "$@" | $SHELL -s >>$TMP 2>&1
-  N=$(md5sum $TMP | cut -b-32)
+  N=$(${md5:-md5sum} $TMP | cut -b-32)
   if
     test "$O" = "$N"
   then
     :
   else
-    size_rows=$(cat $TMP | wc -l)
     test -r $TMP-new && size_rows=$(cat $TMP | wc -l)
-    for i in $(seq $size_rows);
+    for i in $(seq ${size_rows:-$rows});
     do
       printf "[K\n"
     done > $TMP-emptyline
