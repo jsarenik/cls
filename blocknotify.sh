@@ -7,7 +7,6 @@ add=$(echo ${PWD} | md5sum | cut -b-7)
 lock=$PREFIX/tmp/lock-$add
 blocks=$PREFIX/tmp/blocks-$add
 mkdir -p $blocks
-origdir=$PWD
 
 test "$1" = "-c" && { rm -rf $lock $blocks; rebroadcast.sh -c; true; exit; }
 umask 033
@@ -22,11 +21,10 @@ myexit() {
 }
 
 printall() {
-  cd $blocks || exit 1
-  while ls * >/dev/null 2>&1; do
-  for h in *; do
-    printf "%s " $h && rmdir $h
-    bch.sh $origdir getblockheader $h 2>/dev/null \
+  while ls -d $blocks/* >/dev/null 2>&1; do
+  for h in $blocks/*; do
+    printf "%s " ${h##*/} && rmdir $h
+    bch.sh getblockheader ${h##*/} 2>/dev/null \
       | tr -d ' ,"' \
       | grep ^height \
       | cut -d: -f2- \
@@ -34,7 +32,6 @@ printall() {
       || break
   done | sort -n -t " " -k 2 | xargs -n2 nicehash.sh
   done
-  cd $origdir
 }
 
 mkdir $lock 2>/dev/null || { true; exit; }
@@ -43,17 +40,13 @@ printall
 
 shmp=$PREFIX/dev/shm
 gbci=$shmp/getblockchaininfo-$add
-bch.sh getblockchaininfo > ${gbci}-new \
-  && mv ${gbci}-new $gbci && {
+bch.sh getblockchaininfo | safecat.sh ${gbci}-new && {
 
 gbc=$shmp/getblockcount-$add
 gbh=$shmp/getblockhash-$add
 
-cat $gbci | grep blocks | grep -o '[0-9]\+' > ${gbc}-new
-echo $hsh > ${gbh}-new
-
-mv ${gbc}-new $gbc
-mv ${gbh}-new $gbh
+cat $gbci | grep blocks | grep -o '[0-9]\+' | safecat.sh ${gbc}
+echo $hsh | safecat.sh ${gbh}
 
 best=$(cat $gbci | grep headers | grep -o '[0-9]\+' || echo 0)
 ours=$(cat $gbci | grep blocks | grep -o '[0-9]\+' || echo 1)
