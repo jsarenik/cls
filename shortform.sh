@@ -5,7 +5,7 @@
 # new is <hash> only
 # super new is <count> only (number of chars is <64)
 
-VER=1.3.1
+VER=1.4.0
 type md5 >/dev/null 2>&1 && md5=md5
 VERSION=$VER-$(sed 1d $0 | ${md5:-"md5sum"} | cut -b-5)
 test "$1" = "-o" && { only=1; shift; }
@@ -54,10 +54,14 @@ test $# -lt 2 && {
 from=0
 to=.
 
+unset add
 test "$only" = "1" || printf "$count: "
-echo $hash \
+last=$(printf $hash | tail -c4)
+out="$(echo $hash \
+  | cut -b-60 \
   | fold -s -w 4 \
-  | sed -n -e '/^0000$/d;/0/p;$p' \
-  | uniq \
-  | tr '\n' ' ' | cut -b-19 \
-  | tr "$from" "$to"
+  | sed -n -e '/^0000$/d;/0/p' \
+  | tr '\n' ' ') $last"
+chars=$(echo $out | wc -c)
+test $chars -lt 21 || add=M
+echo $(echo $out | cut -b-19 | tr "$from" "$to") $add
