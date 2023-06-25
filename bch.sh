@@ -10,7 +10,6 @@ echo $PWD | grep -q '/wallets' && {
   wn=${mypwd##$PWD/}
   w="-rpcwallet=${wn}"
   test "$1" = "loadwallet" && add="$wn"
-  cd .. # to the datadir
 }
 
 test "${PWD##*/}" = "signet" && chain=signet
