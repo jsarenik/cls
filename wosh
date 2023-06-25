@@ -1,4 +1,4 @@
-#!/bin/ash
+#!/bin/sh
 #
 # Wallet Omle shmollet
 # see https://www.urbandictionary.com/define.php?term=Omle%20shmollet
@@ -34,11 +34,21 @@ exit
 test "$1" = "-h" && help
 add=$(echo ${PWD} | md5sum | cut -b-7)
 tmp=$PREFIX/tmp/wosh-$add
-mkdir -p $tmp
 lock=$PREFIX/tmp/lock-$add
+clean() {
+  rm -rfv $tmp $lock 2>/dev/null
+  exit
+}
+test "$1" = "clean" && clean
+
+mkdir -p $tmp
+until mkdir $lock 2>/dev/null; do sleep 0.5; done
+lastf=$tmp/last
+lastamountf=$tmp/lastamount
 bbh=$(bch.sh getbestblockhash)
 lbhf=$tmp/lastblockhash
-lbh=$(cat $lbhf 2>/dev/null) && { test "$bbh" = "$lbh" || rm -f *last*; }
+lbh=$(cat $lbhf 2>/dev/null) && { test "$bbh" = "$lbh" || { rm -f $tmp/*last*; }; }
+# list | grep $last && rm -f *last*
 
 rcfile=$PWD/wosh.cat
 init() {
@@ -62,17 +72,19 @@ gini() {
 gen() {
   . $rcfile || exit 1
   bch.sh generatetoaddress ${1:-1} $addr
-  rm $rcfile-lastamount $rcfile-last 2>/dev/null
+  rm $lastamountf $lasttxf 2>/dev/null
 }
 
 list() {
+  #sto | jq -r '.unspents[] | .txid + " " + (.vout | tostring) + " " + (.amount | tostring) + " " + (.coinbase | tostring) + " " + (.height | tostring)' \
+  #  | nicecat.sh $tmp/listnew-$$
   sto |
   {
     read l; read l; read l
     read l4
     { printf "height="; echo $l4 | cut -d: -f2 | tr -d ' ,'; } \
       > $rcfile-height
-    read l; read l; read l
+    read l; read l; read l 
     echo "$l4" > $tmp/lines
     cat \
     | tr -d '\n' | tr '{' '\n' \
@@ -80,46 +92,31 @@ list() {
     | tr -d ' "}\]' \
     | tr : " " \
     | sort -n -t " " -k 3
-  } | tee $tmp/listnew-$$
-  until mkdir $lock 2>/dev/null; do sleep 0.5; done
+  } | nicecat.sh $tmp/listnew-$$
   mv $tmp/listnew-$$ $rcfile-list
-  rmdir $lock 2>/dev/null
 }
 
-compute() {
+compute() (
   result=$(echo "scale=8; $1" | bc)
   echo $result | grep -q '^-\.' && result=-0${result#-}
   echo $result | grep -q '^\.' && result=0$result
   echo $result
-}
+)
 
 getbalance() {
-  test -r $rcfile-lastamount && cat $rcfile-lastamount || {
-  list >/dev/null
-  first=0
-  if
-    test $(cat $rcfile-list | wc -l) -ge 2
-  then
-  { cat $rcfile-list | while read txid vout amount coinbase hei rest
-  do
-    test $first -ge 2 && printf '%s\n' "+"
-    first=$(($first+1))
-    echo "$amount"
-  done; echo "+"; echo p; } | dc
-  else
-    cut -d " " -f3 < $rcfile-list
-  fi
-  }
+  sto | jq .total_amount
+# | nicecat.sh $tmp/total-new-$$
+#  mv $tmp/total-new-$$ $tmp/total
 }
 
-genfromlist() {
+genfromlist() (
   amount=0
   first=0
   total=0
   list >/dev/null
-  . $rcfile-height
-  until mkdir $lock 2>/dev/null; do sleep 0.5; done
-  shuf $rcfile-list | while read txid vout amount coinbase hei rest
+  test -r $tmp/height || echo "height=$(bch.sh getblockcount)" > $tmp/height
+  . $tmp/height
+  head -n 751 $rcfile-list | while read txid vout amount coinbase hei rest
   do
     test "$coinbase" = "true" && \
       test $hei -gt $(($height-100)) && continue
@@ -131,70 +128,86 @@ genfromlist() {
     mv $tmp/totalnew $tmp/total
   done > $tmp/utxonew
   mv $tmp/utxonew $tmp/utxo
-  rmdir $lock 2>/dev/null
-}
+)
 
 genlastc() {
-  txid=$(cat $rcfile-last)
-  until mkdir $lock 2>/dev/null; do sleep 0.5; done
+  txid=$(cat $lastf)
   bch.sh gettxout $txid 0 \
     | grep value | cut -d: -f2- | tr -d ' ,' \
-    > $tmp/lastcnew
-  mv $tmp/lastcnew $tmp/lastamount
-  echo $bbh > $lbhf-new
-  mv $lbhf-new $lbhf
-  rmdir $lock 2>/dev/null
+    | safecat.sh $lastamountf
+  echo $bbh | safecat.sh $lbhf
 }
 
 genfromlast() {
-  txid=$(cat $rcfile-last)
+  txid=$(cat $lastf)
   genlastc
-  until mkdir $lock 2>/dev/null; do sleep 0.5; done
-  cat $rcfile-lastamount > $tmp/totalnew
+  cat $lastamountf > $tmp/totalnew
   mv $tmp/totalnew $tmp/total
   printf '%s' '''{"txid":"'$txid'","vout":0}''' > $tmp/utxonew
   mv $tmp/utxonew $tmp/utxo
-  rmdir $lock 2>/dev/null
 }
 
-gentx() {
+gentx() (
   . $rcfile || exit 1
-  fee=${1:-0}
-  test "$fee" = "0" && fee=$(bch.sh estimatesmartfee 1 | jq ".feerate * 5 / 1000 * 100000000")
-  faucet=${2:-0}
+  amount=${1:-0}
+  to=${2:-0}
   fake=${3:-0}
-  if test -r $rcfile-last
+  fee=${4:-0}
+  if test -r $lastf
   then genfromlast
   else genfromlist
   fi
   total=$(cat $tmp/total)
-  total=$(compute "${total}-($fee/100000000)")
+  total=$(compute "${total}-${amount}-(${fee}/100000000)")
+  #echo $total >&2
+  outs='''{"'$addr'":'$total'},{"'$to'":'$amount'}'''
+  echo $total | safecat.sh $lastamountf
+  echo $bbh > $lbhf-new
+  mv $lbhf-new $lbhf
+  #echo $outs >&2
+  {
+  cat <<-EOF
+	[$(cat $tmp/utxo)]
+	[$outs]
+	0
+	true
+	EOF
+  }
+)
+
+gentxf() {
+  . $rcfile || exit 1
+  fee=${1:-0}
+  test "$fee" = "0" && fee=$(compute "118 * 5")
+  faucet=${2:-0}
+  fake=${3:-0}
+  if test -r $lastf
+  then genfromlast
+  else genfromlist
+  fi
+  total=$(cat $tmp/total)
+  total=$(compute "${total}-(($fee)/100000000)")
   #echo $total >&2
   if
     test "$faucet" = "0"
   then
     outs='''{"'$addr'":'$total'}'''
     outs='''{"'$addr'":'$total'},{"data":"6c6561726e20426974636f696e"}'''
-    until mkdir $lock 2>/dev/null; do sleep 0.5; done
-    echo $total > $rcfile-lastamountnew
-    mv $rcfile-lastamountnew $rcfile-lastamount
+    echo $total | safecat.sh $lastamountf
     echo $bbh > $lbhf-new
     mv $lbhf-new $lbhf
-    rmdir $lock 2>/dev/null
   else
-    ranmin=$(compute "(${RANDOM}+50000)/100000000")
+    ranmin=$(compute "(((${RANDOM}+50000)*10)+1)/100000000")
     #echo $ranmin >&2
     rest=$(compute "${total}-$ranmin")
     #echo $rest >&2
     outs='''{"'$addr'":'$rest'},{"'$faucet'":'$ranmin'},{"data":"6c6561726e20426974636f696e"}'''
-    until mkdir $lock 2>/dev/null; do sleep 0.5; done
-    echo $rest > $rcfile-lastamountnew
+    echo $rest > $tmp/lastamountnew
     test "$fake" = "0" && {
-      mv $rcfile-lastamountnew $rcfile-lastamount
+      mv $tmp/lastamountnew $lastamountf
       echo $bbh > $lbhf-new
       mv $lbhf-new $lbhf
     }
-    rmdir $lock 2>/dev/null
   fi
   #echo $outs >&2
   {
@@ -212,20 +225,17 @@ gentxall() {
   fee=${1:-0}
   addr=${2:-0}
   fake=${3:-0}
-  if test -r $rcfile-last
+  if test -r $lastf
   then genfromlast
   else genfromlist
   fi
   total=$(cat $tmp/total)
-  total=$(compute "${total}-($fee/100000000)")
+  total=$(compute "${total}-(($fee)/100000000)")
   #echo $total >&2
   outs='''{"'$addr'":'$total'}'''
-  until mkdir $lock 2>/dev/null; do sleep 0.5; done
-  echo $total > $rcfile-lastamountnew
-  mv $rcfile-lastamountnew $rcfile-lastamount
+  echo $total | safecat.sh $lastamountf
   echo $bbh > $lbhf-new
   mv $lbhf-new $lbhf
-  rmdir $lock 2>/dev/null
   #echo $outs >&2
   {
   cat <<-EOF
@@ -242,30 +252,48 @@ sendall() {
   fee=$(gentxall ${2:-"0"} ${1:-"0"} 1 \
     | crt | srt | drt | grep vsize | cut -d: -f2 | tr -d ' ,"')
   #echo $fee >&2
-  gentxall ${2:-$fee} ${1:-0} | crt | srt | sert | tee $rcfile-lastnew
-  until mkdir $lock 2>/dev/null; do sleep 0.5; done
-  test -s $rcfile-lastnew && mv $rcfile-lastnew $rcfile-last
-  echo $bbh > $lbhf-new
-  mv $lbhf-new $lbhf
-  rmdir $lock 2>/dev/null
+  gentxall ${2:-$fee} ${1:-0} | crt | srt | sert | nicecat.sh $lastf-new
+  test -s $lastf-new && mv $lastf-new $lastf
+  echo $bbh | safecat.sh $lbhf
 }
 
-# send <addr> - sends from faucet to <addr>, change back to faucet
-send() {
-  fee=$(gentx ${2:-"0"} ${1:-"0"} 1 \
+# send <addr> <amount> - sends <amount> to <addr>, change back here
+send() (
+  size=$(gentx ${2:-0} ${1:-0} 1 \
     | crt | srt | drt | grep vsize | cut -d: -f2 | tr -d ' ,"')
+  fee=$(bch.sh estimatesmartfee 1 \
+    | compute "$(grep -m1 feerate | cut -d: -f2- | tr -d '. ",')/1000*$size")
+  #echo $fee
+  #exit
+  #fee=$(gentx ${2:-"0"} ${1:-"0"} 1 \
+  #  | crt | srt | drt | grep vsize | cut -d: -f2 | tr -d ' ,"')
   #echo $fee >&2
-  gentx ${2:-$fee} ${1:-0} | crt | srt | sert | tee $rcfile-lastnew
-  #gentx 0 ${1:-0} | crt | srt | sert | tee $rcfile-lastnew
-  until mkdir $lock 2>/dev/null; do sleep 0.5; done
-  test -s $rcfile-lastnew && {
-    mv $rcfile-lastnew $rcfile-last
+  gentx ${2:-0} ${1:-0} 0 $fee | crt | srt | sert | nicecat.sh $lastf-new
+  #gentx 0 ${1:-0} | crt | srt | sert | nicecat.sh $lastf-new
+  test -s $lastf-new && {
+    mv $lastf-new $lastf
     echo $bbh > $lbhf-new
     mv $lbhf-new $lbhf
   }
-  rmdir $lock 2>/dev/null
-}
+)
 
+# faucet <addr> - sends from faucet to <addr>, change back to faucet
+faucet() {
+  size=$(gentxf ${2:-0} ${1:-0} 1 \
+    | crt | srt | drt | grep vsize | cut -d: -f2 | tr -d ' ,"')
+  fee=$(bch.sh estimatesmartfee 1 \
+    | compute "$(grep -m1 feerate | cut -d: -f2- | tr -d '. ",')/1000*$size")
+  #fee=$(gentxf ${2:-"0"} ${1:-"0"} 1 \
+  #  | crt | srt | drt | grep vsize | cut -d: -f2 | tr -d ' ,"')
+  #echo $fee >&2
+  gentxf ${2:-$fee} ${1:-0} | crt | srt | sert | nicecat.sh $lastf-new
+  #gentxf 0 ${1:-0} | crt | srt | sert | nicecat.sh $lastf-new
+  test -s $lastf-new && {
+    mv $lastf-new $lastf
+    echo $bbh > $lbhf-new
+    mv $lbhf-new $lbhf
+  }
+}
 # ssend <addr> - sends from faucet to <addr>, change back to faucet
 #  using a smart 1 block fee
 ssend() (
@@ -274,15 +302,13 @@ ssend() (
   fee=$(bch.sh estimatesmartfee 1 \
     | compute "$(grep -m1 feerate | cut -d: -f2- | tr -d '. ",')/1000*$size")
   #echo $fee >&2
-  gentx ${2:-$fee} ${1:-0} | crt | srt | sert | tee $rcfile-lastnew
-  #gentx 0 ${1:-0} | crt | srt | sert | tee $rcfile-lastnew
-  until mkdir $lock 2>/dev/null; do sleep 0.5; done
-  test -s $rcfile-lastnew && {
-    mv $rcfile-lastnew $rcfile-last
+  gentx ${2:-$fee} ${1:-0} | crt | srt | sert | nicecat.sh $lastf-new
+  #gentx 0 ${1:-0} | crt | srt | sert | nicecat.sh $lastf-new
+  test -s $lastf-new && {
+    mv $lastf-new $lastf
     echo $bbh > $lbhf-new
     mv $lbhf-new $lbhf
   }
-  rmdir $lock 2>/dev/null
 )
 
 cons() {
@@ -322,7 +348,10 @@ srt() {
 }
 
 sert() {
-  bch.sh -stdin sendrawtransaction
+  {
+  cat
+  echo 0
+  } | bch.sh -stdin sendrawtransaction
 }
 
 sto() {
@@ -331,3 +360,5 @@ sto() {
 }
 
 "$@"
+
+rmdir $lock 2>/dev/null
