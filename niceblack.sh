@@ -56,9 +56,9 @@ emptyplh="???? ???? ???? ????"
 
 printblack.sh $count > $tmp || {
   cat <<EOF
-  +------------------------------ -
-  | block $(printf "$count" | thousands)
-  +------------------------------ -
+   +------------------------------ -
+   | block $(printf "$count" | thousands)
+   +------------------------------ -
 EOF
 } > $tmp
 
@@ -72,13 +72,13 @@ echo $hash \
   read line3
   read line4
 cat << EOF
-  ,---   .123 4567 89ab cdef   ---,
-  | ..   ${line1:-$emptyplh}   .f |
-  | 1.   ${line2:-$emptyplh}   1f |
-  | 2.   ${line3:-$emptyplh}   2f |
-  | 3.   ${line4:-$emptyplh}   3f |
-  '===   ==== ==== ==== ====   ==='
-   sf:   $(shortsimple.sh $hash)
+   ,---   .123 4567 89ab cdef   ---,
+   | ..   ${line1:-$emptyplh}   .f |
+   | 1.   ${line2:-$emptyplh}   1f |
+   | 2.   ${line3:-$emptyplh}   2f |
+   | 3.   ${line4:-$emptyplh}   3f |
+   '===   ==== ==== ==== ====   ==='
+    sf:   $(shortsimple.sh $hash)
 EOF
 } | tr "$from" "$to"
 } >> $tmp

@@ -27,7 +27,7 @@ test "$font" = "block" -o "$font" = "banner" \
   || bcnew="block $bcnew"
 
 {
-figlet -w 39 -c -f $font \
+figlet -w 41 -c -f $font \
   "$bcnew"
 } | sed 's/^[[:space:]]*$//g' | uniq
 
