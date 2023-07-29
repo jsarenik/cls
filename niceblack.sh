@@ -82,4 +82,4 @@ cat << EOF
 EOF
 } | tr "$from" "$to"
 } >> $tmp
-cat $tmp && rm -f $tmp
+cat $tmp | cut -c-38 && rm -f $tmp
