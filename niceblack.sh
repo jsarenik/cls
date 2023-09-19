@@ -79,7 +79,8 @@ cat << EOF
    | 3.   ${line4:-$emptyplh}   3f |
    '===   ==== ==== ==== ====   ==='
     sf:   $(shortsimple.sh $hash)
+    sk:   $(shortkode.sh $hash)
 EOF
 } | tr "$from" "$to"
 } >> $tmp
-cat $tmp | cut -c-38 && rm -f $tmp
+cat $tmp | cut -c-39 && rm -f $tmp
