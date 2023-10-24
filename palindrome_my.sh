@@ -29,13 +29,25 @@ do
     num=$(($num / 10))
 done
  
-nhalf=$(echo $original_num | cut -b -$half)
+ohalf=$(echo $original_num | cut -b -$hal)
+ohalf=$(($ohalf))
+ohal=$(echo $ohalf | cut -b -$half | revermy)
+#echo $ohal
+
+nhalf=$(echo $original_num | cut -b -$hal)
 nhalf=$(($nhalf + 1))
+nhal=$(echo $nhalf | cut -b -$half | revermy)
 old=$(
 {
-echo $nhalf
-test $(($len % 2)) -eq 0 && echo $middle
-echo $nhalf | revermy
+if test $(($len % 2)) -eq 0
+then
+#  echo "${ohalf}${ohal}"
+  test "${ohalf}${ohal}" -gt "$original_num" && echo "${ohalf}${ohal}" \
+    || { echo $nhalf; echo $nhal; }
+else
+  test "${ohalf}${ohal}" -gt "$original_num" && echo "${ohalf}${ohalf}" \
+    || { echo $nhalf; echo $nhal; }
+fi
 } | tr -d '\n'
 )
 
