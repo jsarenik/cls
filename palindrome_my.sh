@@ -10,24 +10,26 @@ revermy() {
 }
 
 # reverse the number
-rev=0
+#rev=0
+
 len=$(echo $num | wc -c)
 leno=$(($len - 1))
 hal=$(($len / 2))
 half=$(($leno / 2))
 middle=$(echo $original_num | cut -b $hal)
+
 #while test "$num" -gt 0
-for i in $(seq $hal)
-do
-    # get the remainder of the number
-    remainder=$(($num % 10))
-    
-    # multiply reverse by 10 then add the remainder
-    rev=$((($rev * 10) + $remainder))
-    
-    # divide the number by 10
-    num=$(($num / 10))
-done
+#for i in $(seq $hal)
+#do
+#    # get the remainder of the number
+#    remainder=$(($num % 10))
+#    
+#    # multiply reverse by 10 then add the remainder
+#    rev=$((($rev * 10) + $remainder))
+#    
+#    # divide the number by 10
+#    num=$(($num / 10))
+#done
  
 ohalf=$(echo $original_num | cut -b -$hal)
 ohalf=$(($ohalf))
@@ -45,7 +47,7 @@ then
   test "${ohalf}${ohal}" -gt "$original_num" && echo "${ohalf}${ohal}" \
     || { echo $nhalf; echo $nhal; }
 else
-  test "${ohalf}${ohal}" -gt "$original_num" && echo "${ohalf}${ohalf}" \
+  test "${ohalf}${ohal}" -gt "$original_num" && echo "${ohalf}${ohal}" \
     || { echo $nhalf; echo $nhal; }
 fi
 } | tr -d '\n'
