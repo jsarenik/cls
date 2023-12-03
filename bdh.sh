@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test -d .bitcoin && cd .bitcoin
+export MALLOC_ARENA_MAX=1
+
 test -d "$1" && { cd "$1"; shift; }
 
 test "${PWD##*/}" = "signet" && chain=signet
