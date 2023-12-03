@@ -29,7 +29,7 @@ test "$1" = "-h" && usage
 test $# -le 2 || usage
 test $# -ne 2 && {
   test $# -eq 0 && {
-    hash=${1:-$(bch.sh getbestblockhash)}
+    hash=$(bch.sh getbestblockhash)
     count=$(bch.sh getblockheader $hash \
       | tr , '\n' | grep -w height | cut -d: -f2-)
   } || {
