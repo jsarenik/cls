@@ -54,6 +54,25 @@ from=0
 to=.
 emptyplh="???? ???? ???? ????"
 
+BH=${hash:-0000000000000000000000000000000000000000000000000000000000001f1f}
+
+: Following is the shortform
+last=$(echo $BH | cut -b61-64)
+a=$(echo $BH | cut -b-60 \
+  | fold -w 4 \
+  | grep -Ev '^(0000|[^0]{4})$')
+R=$(echo $a $last | cut -b-20)
+sf=$({ echo $R | grep "$last$" \
+  || echo $R M; } | tr "0\n" ". ")
+
+: Following is the shortkode
+nz=$(echo $BH | fold -w 4 \
+  | grep -E '^[^0]{4}$' | wc -l)
+z=$(echo $BH | fold -w 4 \
+  | grep '^0000$' | wc -l)
+sk=$(printf "%s %x%x" $last ${nz} ${z} \
+  | tr "0\n" ". ")
+
 printblack.sh $count > $tmp || {
   cat <<EOF
   +------------------------------ -
