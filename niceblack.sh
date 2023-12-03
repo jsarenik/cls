@@ -9,6 +9,7 @@ VER=1.3.1
 type md5 >/dev/null 2>&1 && md5=md5
 VERSION=$VER-$(sed 1d $0 | ${md5:-"md5sum"} | cut -b-5)
 tmp=$(mktemp)
+exec 2>/dev/null
 
 usage() {
 cat <<EOF
