@@ -12,8 +12,8 @@ node=${1:-"192.168.1.118:8332"}
 
 echo '{'
 echo '''{"jsonrpc":"1.0","id":"'$$'","method":"getmempoolinfo","params":[]}''' \
-  | busybox.static wget -q -O - --post-file - \
+  | wget -q -O - --post-file - \
       --header 'content-type: text/plain;' http://$USER@$node \
-  | busybox.static sed 's/^.*{//;s/}.*$//;s/:/: /g;s/,/,\n/g' \
+  | busybox sed 's/^.*{//;s/}.*$//;s/:/: /g;s/,/,\n/g' \
   | while read line; do echo "  $line"; done
 echo '}'
