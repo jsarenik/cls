@@ -1,6 +1,6 @@
 #!/bin/sh
 
 tmp=$(mktemp)
-cat > $tmp
+cat | tee $tmp
 chmod a+r $tmp
-test -s $tmp && mv -uf $tmp $1 && cat $1
+test -s $tmp && mv -f $tmp $1 || rm -f $tmp
