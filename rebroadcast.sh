@@ -7,7 +7,10 @@ mkdir $lock >/dev/null 2>&1 || exit 1
 echo Rebroadcasting transactions from the mempool...
 { bch.sh getrawmempool \
   | tr -d '[], "' | sed '/^$/d' \
+  | shuf \
+  | head -256 \
   | xargs -r -n1 bch.sh getrawtransaction \
-  | bch.sh -stdin sendrawtransaction 50; } >/dev/null 2>&1
+  | while read l; do echo $l | bch.sh -stdin sendrawtransaction; done; } \
+    >/dev/null 2>&1
 echo Rebroadcast done
 rmdir $lock
