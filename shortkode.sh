@@ -6,8 +6,9 @@ if
 then
   BC=${height:-$(bch.sh getblockcount)}
   BH=${best:-$(bch.sh getblockhash $BC)}
-  test "$1" = "-b" && printf "%s$d" "$BC" \
-  || { d=""; l=$(printf "%x" $BC | wc -c); lh=$((l+l%2)); printf "%0${lh}x" "$BC"; }
+  test "$1" = "-b" && printf "%s$d" "$BC" || { 
+    d=""; l=$(printf "%x" $BC | wc -c); lh=$((l+l%2)); printf "%0${lh}x" "$BC";
+  }
 else
   BH=${1:-${best:-(bch.sh getbestblockhash)}}
 fi
