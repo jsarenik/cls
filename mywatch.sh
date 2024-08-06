@@ -2,7 +2,7 @@
 
 TMP=/tmp/mywatch-$$
 stty size > $TMP-size
-read rows cols < $TMP-size
+read -r rows cols < $TMP-size
 rows=$(($rows-2))
 sleep="2"
 test "$1" = "-n" && { sleep=${2:-"2.0s"}; shift 2; }
