@@ -33,8 +33,9 @@ do
   then
     :
   else
-    test -r $TMP-new && size_rows=$(cat $TMP | wc -l)
-    for i in $(seq ${size_rows:-$rows});
+    #test -r $TMP-new && size_rows=$(cat $TMP | wc -l)
+    #for i in $(seq ${size_rows:-$rows});
+    for i in $(seq $rows);
     do
       printf "[K\n"
     done > $TMP-emptyline
