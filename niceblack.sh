@@ -5,7 +5,7 @@
 # new is <hash> only
 # super new is <count> only (number of chars is <64)
 
-VER=1.3.1
+VER=1.3.2
 type md5 >/dev/null 2>&1 && md5=md5
 VERSION=$VER-$(sed 1d $0 | ${md5:-"md5sum"} | cut -b-5)
 tmp=$(mktemp)
@@ -25,14 +25,15 @@ thousands() {
   sed -r -e ':L' -e 's=([0-9]+)([0-9]{3})=\1,\2=g' -e 't L'
 }
 
+. /dev/shm/UpdateTip-bitcoin
 test "$1" = "-V" && { echo $VERSION; exit; }
 test "$1" = "-h" && usage
 test $# -le 2 || usage
 test $# -ne 2 && {
   test $# -eq 0 && {
-    hash=$(bch.sh getbestblockhash)
-    count=$(bch.sh getblockheader $hash \
-      | tr , '\n' | grep -w height | cut -d: -f2-)
+    hash=${best:-$(bch.sh getbestblockhash)}
+    count=${height:-$(bch.sh getblockheader $hash \
+      | tr , '\n' | grep -w height | cut -d: -f2-)}
   } || {
   if
     test $(echo $1 | wc -c) -lt 64
@@ -53,7 +54,8 @@ test $# -ne 2 && {
 
 from=0
 to=.
-emptyplh="???? ???? ???? ????"
+emptyplh="0000 0000 0000 0000"
+emptypll="0000 0000 0000 1f1f"
 
 BH=${hash:-0000000000000000000000000000000000000000000000000000000000001f1f}
 
@@ -74,6 +76,17 @@ z=$(echo $BH | fold -w 4 \
 sk=$(printf "%s %x%x" $last ${nz} ${z} \
   | tr "0\n" ". ")
 
+hashtobinary() {
+  tobin=$(printf "%s" $(echo "ibase=16;obase=2;$(echo $hash | tr '[a-z]' '[A-Z]')" \
+    | busybox bc | tr -d '\\\n'))
+  len=$(printf "%s" "$tobin" | wc -c)
+  missing=$((256-$len))
+  {
+  for i in $(seq $missing); do printf "0"; done;
+  echo $tobin
+  } | fold -w 32 | grep -m1 1 | fold -w 16 | tr '01\n' '.| ' | cut -b-33; echo
+}
+
 printblack.sh $count > $tmp || {
   cat <<EOF
   +------------------------------ -
@@ -84,8 +97,8 @@ EOF
 
 {
 echo $hash \
-  | fold -s -w 16 \
-  | sed -E 's/([0-9a-f]{4})(....)(....)(....)/\1 \2 \3 \4/g' \
+  | fold -w 4 \
+  | paste -d " " - - - - \
   | {
   read line1
   read line2
@@ -96,11 +109,12 @@ cat << EOF
   | ..   ${line1:-$emptyplh}   .f |
   | 1.   ${line2:-$emptyplh}   1f |
   | 2.   ${line3:-$emptyplh}   2f |
-  | 3.   ${line4:-$emptyplh}   3f |
+  | 3.   ${line4:-$emptypll}   3f |
   '===   ==== ==== ==== ====   ==='
-   sf:   $sf
    sk:   $sk
 EOF
+#   sf:   $sf
+#  $(hashtobinary)
 } | tr "$from" "$to"
 } >> $tmp
 cat $tmp | cut -c-37 && rm -f $tmp
