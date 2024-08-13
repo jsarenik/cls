@@ -17,7 +17,6 @@ test "${PWD##*/}" = "testnet4" && chain=testnet4 \
 test "${PWD##*/}" = "regtest" && chain=regtest
 
 test "$chain" = "" \
-    && PATH=$HOME/bin/bitcoin-knots/bin:$PATH \
     || { ddir=${PWD%/*}; chain="-chain=$chain"; }
 
 exec bitcoind "-datadir=${ddir:-$PWD}" ${chain} "$@"
