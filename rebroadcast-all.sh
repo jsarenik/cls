@@ -6,8 +6,6 @@ mkdir $lock >/dev/null 2>&1 || exit 1
 
 echo Rebroadcasting transactions from the mempool...
 { grm.sh \
-  | shuf \
-  | head -512 \
   | grt.sh \
   | sert.sh
 } >/dev/null 2>&1
