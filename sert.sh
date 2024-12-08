@@ -6,5 +6,5 @@ test "$1" = "-q" && { add="2>/dev/null"; shift; }
 {
 echo $line
 echo 0
-} | eval bch.sh -stdin sendrawtransaction $add &
+} | eval bch.sh -stdin sendrawtransaction $add
 done
