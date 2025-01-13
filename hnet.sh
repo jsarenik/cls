@@ -2,7 +2,6 @@
 
 test -d "$1" && { cd "$1"; shift; }
 test -d .bitcoin && cd .bitcoin
-ls | grep -q . || exit 1
 
 while echo "${PWD}" | grep -qw "wallets"; do cd ..; done
 
