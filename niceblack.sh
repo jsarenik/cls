@@ -58,7 +58,8 @@ emptyplh="0000 0000 0000 0000"
 emptypll="0000 0000 0000 1f1f"
 
 BH=${hash:-0000000000000000000000000000000000000000000000000000000000001f1f}
-last=$(echo $BH | cut -b61-64)
+last=${BH: -4}
+#last=$(echo $BH | cut -b61-64)
 
 #: Following was the shortform
 #a=$(echo $BH | cut -b-60 \
@@ -73,8 +74,17 @@ nz=$(echo $BH | fold -w 4 \
   | grep -cE '^[^0]{4}$')
 z=$(echo $BH | fold -w 4 \
   | grep -c '^0000$')
-sk=$(printf "%s %x%x" $last ${nz} ${z} \
-  | tr "0\n" ". ")
+nzzs=$(((${nz}<<4)+${z}))
+#sk=$(printf "%s %x" $last $nzzs \
+#  | tr "0\n" ". ")
+
+: Following is the anecdotal code
+all=$(echo $BH | fold -w 4 \
+    | sed 's/^/0x/' \
+    | paste -s | tr '\t' ^)
+ak=$(printf "%04x %02x\n" \
+    $(($all)) $nzzs \
+    | tr 0 .)
 
 hashtobinary() {
   tobin=$(printf "%s" $(echo "ibase=16;obase=2;$(echo $hash | tr '[a-z]' '[A-Z]')" \
@@ -106,14 +116,16 @@ echo $hash \
   read line4
 cat << EOF
   ,---   .123 4567 89ab cdef   ---,
+  |      ABOVEisJUSTaSAMPLE^      |
   | ..   ${line1:-$emptyplh}   .f |
   | 1.   ${line2:-$emptyplh}   1f |
   | 2.   ${line3:-$emptyplh}   2f |
   | 3.   ${line4:-$emptypll}   3f |
   '===   ==== ==== ==== ====   ==='
-   sk:   $sk
+   ak:   $ak
 EOF
 #   sf:   $sf
+#   sk:   $sk
 #  $(hashtobinary)
 } | tr "$from" "$to"
 } >> $tmp
