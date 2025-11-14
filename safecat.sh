@@ -1,7 +1,7 @@
 #!/bin/sh
 
-tmp=$(mktemp)
+tmp=$(mktemp /tmp/tmp-safecat.XXXXXX)
 cat > $tmp
 chmod a+r $tmp
-test -s $tmp && cp -uf $tmp $1
+cp -u $tmp $1
 rm -f $tmp
