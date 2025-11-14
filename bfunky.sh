@@ -4,6 +4,7 @@
 setbchain() {
   test "${PWD##*/}" = "signet" && chain=signet
   test "${PWD##*/}" = "testnet3" && chain=test
+  test "${PWD##*/}" = "testnet4" && chain=testnet4
   test "${PWD##*/}" = "regtest" && chain=regtest
   test "$chain" = "" || ddir=${PWD%/*}
 }
@@ -24,7 +25,7 @@ bch() (
   echo $PWD | grep -q wosh- && test -r wosh.cat && cd ..
   test "${PWD##*/}" = "wallets" && cd ..
   setbchain
-  bitcoin-cli $wallet "-datadir=${ddir:-$PWD}" \
+  bitcoin-cli -rpcclienttimeout=0 $wallet "-datadir=${ddir:-$PWD}" \
     -chain=${chain:-main} "$@"
 )
 
@@ -55,6 +56,7 @@ bth() (
   test -d "$1" && { cd "$1"; shift; }
   test "${PWD##*/}" = "signet" && chain=-t
   test "${PWD##*/}" = "testnet3" && chain=-t
+  test "${PWD##*/}" = "testnet4" && chain=-t
   test "${PWD##*/}" = "regtest" && chain=-r
   bitcointool ${chain} "$@"
 )
