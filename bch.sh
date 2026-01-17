@@ -9,8 +9,9 @@ test -r wallet.dat && {
   mypwd=$PWD
   test -L $PWD && mypwd=$(readlink $PWD)
   w="-rpcwallet=${mypwd##*/}"
+  cd ..
 }
-cd ..
+cd ${PWD%%/wallets*}
 
 test -L $PWD && {
   mypwd=$(readlink $PWD)
