@@ -35,11 +35,15 @@ test -r $old && rm wallet.dat || {
 
 cd ..
 
+# pubonly blank
 bch.sh createwallet $w $pkei true
 cd $w
 
 bch.sh -stdin importdescriptors < $json
 
-ph=$(ph.sh) && bch.sh rescanblockchain $ph
+#utf=/dev/shm/UpdateTip-$net
+#test -r $utf && . $utf || height=$(gbc.sh)
+#height=$(gbc.sh) && bch.sh rescanblockchain $(($height-60))
+#ph=$(ph.sh) && bch.sh rescanblockchain $ph
 
 echo $json | grep '^/tmp/' && rm $json
