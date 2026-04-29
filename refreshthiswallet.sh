@@ -21,8 +21,10 @@ bch.sh listdescriptors $pke \
   | safecat.sh $json.fbackup
 }
 
+test -r $json || {
 bch.sh listdescriptors $pke | sed 's/"timestamp".*$/"timestamp":"now",/' | jq -rc .descriptors \
   | safecat.sh $json
+}
 
 ulw.sh
 
